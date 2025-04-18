@@ -1,0 +1,32 @@
+# pyproject.toml  (project root)
+
+[tool.poetry]
+name        = "spacecraft-gnc"
+version     = "0.1.0"
+description = "Python port of spacecraft dynamics & attitude control toolbox"
+authors     = ["Leif Tinwell <leiftinwell@rocketmail.com>"]
+license     = "MIT"
+readme      = "README.md"
+
+# tell Poetry where your source package lives
+packages    = [{ include = "gnc", from = "src" }]
+
+[tool.poetry.dependencies]
+python      = ">=3.11,<3.14"
+numpy       = "^2.2"
+scipy       = "^1.15"
+matplotlib  = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+pythonpath = ["src"]
+
+[build-system]
+requires     = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+simulation = "gnc.simulation.main:run"
