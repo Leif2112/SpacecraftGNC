@@ -1,7 +1,7 @@
 from scipy.integrate import solve_ivp
 import numpy as np
 
-def integrate_attitude_ode113_like(rhs, y0, t_span, t_eval, J, rtol=1e-9, atol=1e-12):
+def integrate_attitude_ode113_like(rhs, y0, t_span, t_eval, J, rtol=1e-13, atol=1e-14):
     """
     Integrate ODE using a method similar to MATLAB's ode113 (adaptive, high-order).
 

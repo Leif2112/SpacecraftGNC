@@ -1,22 +1,19 @@
 import numpy as np
+from numba import njit
 
+@njit
 def solve_kepler(ecc: float, M: float, tol: float = 1e-10, max_iter: int = 100) -> float:
     """
     Solve Kepler's equation M = E - e*sin(E) for eccentric anomaly E using Newton-Raphson method.
 
     Parameters:
-        ecc : float
-            Orbital eccentricity (0 <= e < 1)
-        M : float
-            Mean anomaly [rad]
-        tol : float
-            Tolerance for convergence
-        max_iter : int
-            Maximum number of iterations
+        ecc : Orbital eccentricity (0 <= e < 1)
+        M : Mean anomaly [rad]
+        tol : Tolerance for convergence
+        max_iter : Maximum number of iterations
 
     Returns:
-        E : float
-            Eccentric anomaly [rad]
+        E : Eccentric anomaly [rad]
     """
     if not (0 <= ecc < 1):
         raise ValueError("Eccentricity must be in range [0, 1).")
@@ -31,19 +28,17 @@ def solve_kepler(ecc: float, M: float, tol: float = 1e-10, max_iter: int = 100) 
             return E
     raise RuntimeError("Kepler solver did not converge")
 
+
 def coe_to_rv(coe: np.ndarray, mu: float) -> np.ndarray:
     """
     Convert classical orbital elements to ECI position and velocity vectors.
 
     Parameters:
-        coe : np.ndarray
-            Orbital elements [a, e, i, RAAN, arg_periapsis, true_anomaly] in radians
-        mu : float
-            Gravitational parameter [km^3/s^2]
+        coe : Orbital elements [a, e, i, RAAN, arg_periapsis, true_anomaly] in radians
+        mu : Gravitational parameter [km^3/s^2]
 
     Returns:
-        rv : np.ndarray
-            6x1 state vector [x, y, z, vx, vy, vz] in ECI frame
+        rv : 6x1 state vector [x, y, z, vx, vy, vz] in ECI frame
     """
     a, e, i, RAAN, argp, nu = coe
 
