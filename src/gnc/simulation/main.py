@@ -3,14 +3,15 @@ import matplotlib.pyplot as plt
 
 
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
-from gnc.integrators.ode113_like import integrate_attitude_ode113_like
+from gnc.integrators.ode113_like import ode113
 from gnc.visualisation.plot_specific_energy import plot_specific_energy
-from gnc.dynamics.orbital import solve_kepler
+from gnc.visualisation.plot_posVelError import plot_error_magnitudes
+from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci
 
 ######################### ORBITAL ELEMENTS #########################
 
 coe = np.array([
-    71510.6,              # semi-major axis [km]
+    7151.6,              # semi-major axis [km]
     0.0008,              # eccentricity
     np.deg2rad(98.39),   # inclination
     np.deg2rad(10),      # RAAN
@@ -31,7 +32,9 @@ Im = np.array([          # Spacecraft inertia matrix [kg·m²]
 ])
 
 
-tol = 10e-10         # tolerance for integrator 
+tol = 10e-10         
+
+
 #####################################################################
 
 def run(): 
@@ -63,11 +66,51 @@ def run():
 
     MAt = np.mod(coe[5] + n * (t - t0), 2 * np.pi)  # mean anomaly [rad]
 
-    #propagate state of satellite using MA(t), E(t), TA(t) using COE 
-    E = np.array([solve_kepler(coe[1], Mi, tol=tol) for Mi in MAt])  # eccentric anomaly as a function of time
- 
-    TA = np.mod(2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E / 2)), 2 * np.pi)  # true anomaly as a function of time
+
+    E_matrix = np.zeros(len(t))
+    TA = np.zeros(len(t))
+    COE = np.zeros((6, len(t)))
+    X = np.zeros((6, len(t)))
+
+    #solve Kepler's equation for each time step 
+    for tt in range(len(t)):
+        E = solve_kepler(coe[1], MAt[tt], tol=tol)          # eccentric anomaly as a function of time
+        E_matrix[tt] = E                                    # store E in array for plotting    
+
+        # True amomaly from eccentric anomaly
+        TA[tt] = np.mod(
+            2 * np.arctan2(
+                np.sqrt(1 + coe[1]) * np.tan(E /2),
+                np.sqrt(1 - coe[1])
+            ),
+            2 * np.pi
+        )  
+        
+        #Store COE and convert to Cartesian coordinates / @COE2RV
+        COE[:, tt] = np.array([ coe[0], coe[1], coe[2], coe[3], coe[4], TA[tt] ])
+        X[:, tt] = coe_to_rv(COE[:, tt], mu)                # State vector from clasissical orbital elements to RV propagation
+
+    sol = ode113(
+        rhs = tbp_eci,
+        y0 = X[:6, 0],
+        t_span = (t[0], t[-1]),
+        t_eval = t,
+        mu = mu
+    )
+
+    Xout = sol.y         # solution state vector at each time step 
+
+    v_Xout = np.linalg.norm(Xout[3:6, :], axis=0)  # velocity magnitude at each time step
+    r_Xout = np.linalg.norm(Xout[0:3, :], axis=0)  # position magnitude at each time step
+
+    diff = np.abs(X[1:6, :] - Xout[1:6, :])        # Pos and vel difference from COE2RV propagation
+    rdiff = np.linalg.norm(diff[0:3, :], axis=0)   #pos error magnitude
+    vdiff = np.linalg.norm(diff[3:6, :], axis=0)   #vel error magnitude
+
     
+
+    # Integrate equation of motion
+
     
     '''
     # Inertia matrix [kg·m²] (example spacecraft)
@@ -136,7 +179,8 @@ def run():
 
     
 
-#plot_specific_energy(coe, mu)
+    #plot_specific_energy(coe, mu)
+    plot_error_magnitudes(t, vdiff, rdiff)
 
 if __name__ == "__main__":
     run()

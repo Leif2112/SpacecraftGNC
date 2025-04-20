@@ -85,7 +85,7 @@ def coe_to_rv(coe: np.ndarray, mu: float) -> np.ndarray:
 
     return np.concatenate((r_eci, v_eci))
 
-def tbp_eci_rhs(t: float, state: np.ndarray, mu: float) -> np.ndarray:
+def tbp_eci(t: float, state: np.ndarray, mu: float) -> np.ndarray:
     """
     Compute RHS of the two-body problem in ECI frame.
 
