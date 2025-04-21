@@ -11,6 +11,8 @@ import time
 init(autoreset=True)
 
 CYBER = "\033[38;2;88;176;140m"
+CYAN_VEC = "\033[38;2;120;220;232m"
+PINK_VEC = "\033[38;2;255;97;136m"
 RESET = "\033[0m"
 
 ascii_logo = [
@@ -30,8 +32,17 @@ ascii_logo = [
     f"{CYBER}  +########################  {RESET}"
 ]
 
-def display_sim_dashboard(coe, P, E0, TA0, kepler_iters):
+def display_sim_dashboard(coe, P, E0, TA0, X, kepler_iters):
     os.system('cls' if os.name == 'nt' else 'clear')  # clear the terminal
+    position_label = "Apoapsis" if np.pi/2 < TA0 < 1.5 * np.pi else "Periapsis"
+
+    state_fmt = lambda vec: np.array2string(
+    vec,
+    precision=4,
+    separator=', ',
+    suppress_small=False,
+    max_line_width=999
+    )
 
     info_lines = [
         f"{CYBER}       Semi-major axis{RESET}       (a)  | {coe[0]:.2f} km",
@@ -44,6 +55,10 @@ def display_sim_dashboard(coe, P, E0, TA0, kepler_iters):
         f"{CYBER}       Orbital Period{RESET}        (P)  | {P:.2f} s",
         f"{CYBER}       Eccentric Anomaly{RESET}          | {E0:.4f} rad",
         f"{CYBER}       Convergence {RESET}               | {kepler_iters}",
+        f"{CYBER}       Location along orbit{RESET}       | {position_label}",
+        "",
+        f"{CYAN_VEC}       Initial State Vector{RESET}        {state_fmt(X[:, 0])}",
+        f"{PINK_VEC}       Final State Vector{RESET}          {state_fmt(X[:, -1])}",
     ]
 
     logo_height = len(ascii_logo)

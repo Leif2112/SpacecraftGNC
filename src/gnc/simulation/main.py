@@ -34,7 +34,7 @@ def cli():
 coe = np.array([
     7151.6,              # semi-major axis [km]
     0.0008,              # eccentricity
-    np.deg2rad(180),   # inclination
+    np.deg2rad(98.39),     # inclination
     np.deg2rad(10),      # RAAN
     np.deg2rad(233),     # argument of periapsis
     np.deg2rad(127.0)    # true anomaly
@@ -76,7 +76,7 @@ def run():
 
     #create time vector for plotting
     t0 = 0
-    t = np.linspace(t0, P + t0, 1000)   # time vector [s]
+    t = np.linspace(t0, 40000 + t0, 1000)   # time vector [s]
     
     E0, i = solve_kepler(coe[1], coe[5], tol=tol)  # eccentric anomaly at t0 [rad]
     
@@ -85,7 +85,7 @@ def run():
     #Compute initial Ture Anomaly
     TA0 = 2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E0 / 2))  # true anomaly at t0 [rad]
 
-    position_label = "Apoapsis" if np.pi/2 < TA0 < 1.5 * np.pi else "Periapsis"
+
 
     MAt = np.mod(coe[5] + n * (t - t0), 2 * np.pi)  # mean anomaly [rad]
 
@@ -131,7 +131,7 @@ def run():
     vdiff = np.linalg.norm(diff[3:6, :], axis=0)   #vel error magnitude
 
     
-    display_sim_dashboard(coe, P, E0, TA0, i)
+    display_sim_dashboard(coe, P, E0, TA0, X, i)
     # Integrate equation of motion
 
     
@@ -207,10 +207,10 @@ def run():
 
     if run_plots:
         #plot True, Mean & Eccentric anomaly against time
-        anomalyPlot(t, E_matrix, TA, MAt)
+        #anomalyPlot(t, E_matrix, TA, MAt)
 
         #plot_specific_energy(coe, mu)
-        #plot_error_magnitudes(t, vdiff, rdiff)
+        plot_error_magnitudes(t, vdiff, rdiff)
 
          
 
