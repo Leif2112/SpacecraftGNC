@@ -61,10 +61,10 @@ Then run the simulation directly with:
 python -m gnc.simulation.main
 ```
 
-Or with Poetry:
+Or simply:
 
 ```bash
-poetry run simulation
+sim
 ```
 
 ---
