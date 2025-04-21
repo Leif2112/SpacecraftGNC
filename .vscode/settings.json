@@ -4,5 +4,95 @@
         "plaintext": false,
         "markdown": false,
         "scminput": false
-    }
+    },
+    "folder-color.pathColors": [
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\integrators\\ode113_like.py\\",
+            "color": "foldercolorizer.color_cc33cc"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\dynamics\\orbital.py\\",
+            "color": "foldercolorizer.color_cc33cc"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\__pycache__\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\plot_anomalyVStime.py\\",
+            "color": "foldercolorizer.color_ff6600"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\plot_orbital.py\\",
+            "color": "foldercolorizer.color_ff6600"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\plot_posVelError.py\\",
+            "color": "foldercolorizer.color_ff6600"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\plot_specific_energy.py\\",
+            "color": "foldercolorizer.color_ff6600"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\",
+            "badge": "📈"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\integrators\\__pycache__\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\dynamics\\__pycache__\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\__pycache__\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\tests\\",
+            "color": "foldercolorizer.color_990033"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\__init__.py\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\poetry.lock\\",
+            "color": "foldercolorizer.color_cccc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\pyproject.toml\\",
+            "color": "foldercolorizer.color_cccc33",
+            "badge": "⚙️"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\",
+            "badge": "🟢"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\attitude\\__pycache__\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\attitude\\__init__.py\\",
+            "color": "foldercolorizer.color_555555",
+            "badge": "⭕"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\simulation\\",
+            "badge": "🟢"
+        }
+    ]
 }

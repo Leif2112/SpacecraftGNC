@@ -18,6 +18,7 @@ scipy       = "^1.15"
 matplotlib  = "^3.10"
 numba = "^0.61.2"
 colorama = "^0.4.6"
+psutil = "^7.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
@@ -31,4 +32,4 @@ requires     = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-sim = "gnc.simulation.main:run"
+sim = "gnc.simulation.main:cli"
