@@ -151,7 +151,7 @@ poetry install
 
 ## 🤝 Acknowledgements
 
-This project is maintained by Leif Tinwell, with technical guidance from GNC experts and ported faithfully from an academic-grade orbital mechanics model.
+This project is maintained by Leif Tinwell.
 
 ---
 
