@@ -2,7 +2,7 @@ import numpy as np
 from numba import njit
 
 @njit
-def solve_kepler(ecc: float, M: float, tol: float = 1e-10, max_iter: int = 100) -> float:
+def solve_kepler(ecc: float, M: float, tol: float = 1e-10) -> tuple[float, int]:
     """
     Solve Kepler's equation M = E - e*sin(E) for eccentric anomaly E using Newton-Raphson method.
 
@@ -15,19 +15,23 @@ def solve_kepler(ecc: float, M: float, tol: float = 1e-10, max_iter: int = 100) 
     Returns:
         E : Eccentric anomaly [rad]
     """
-    if not (0 <= ecc < 1):
+    if not (0 < ecc <= 0.99):
         raise ValueError("Eccentricity must be in range [0, 1).")
+    
+    En = M                          #Eucated guess
+    i = 0                           #initialise interation count
+    fEn = En - ecc * np.sin(En) - M    #initialise F(En)
 
-    E = M if ecc < 0.8 else np.pi  # good starting guess
-    for _ in range(max_iter):
-        f = E - ecc * np.sin(E) - M
-        f_prime = 1 - ecc * np.cos(E)
-        delta = f / f_prime
-        E -= delta
-        if abs(delta) < tol:
-            return E
-    raise RuntimeError("Kepler solver did not converge")
-
+    while np.abs(fEn) > tol:        #iterate while F(En) is higher than threshold value
+        i += 1
+        fEn = En - ecc * np.sin(En) - M
+        fpEn = 1 - ecc * np.cos(En)
+        Ens = En - fEn/fpEn
+        En = Ens
+    
+    E = np.mod(En, 2 * np.pi)
+    return E, i  
+    
 
 def coe_to_rv(coe: np.ndarray, mu: float) -> np.ndarray:
     """

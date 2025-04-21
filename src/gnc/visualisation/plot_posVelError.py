@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_error_magnitudes(t, vdiff, rdiff):
+def plot_error_magnitudes(t: np.ndarray, vdiff: np.ndarray, rdiff: np.ndarray):
     """
     Plot velocity and position error magnitudes on dual y-axes.
 

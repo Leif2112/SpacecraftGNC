@@ -1,12 +1,29 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import time
+from colorama import init, Fore, Style
+from colorama.ansi import AnsiFore
+
 
 
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
 from gnc.integrators.ode113_like import ode113
+from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci
+
 from gnc.visualisation.plot_specific_energy import plot_specific_energy
 from gnc.visualisation.plot_posVelError import plot_error_magnitudes
-from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci
+from gnc.visualisation.plot_anomalyVStime import anomalyPlot
+from gnc.visualisation.plot_orbital import plot_orbit_eci
+
+
+# Initialize colorama once
+init(autoreset=True)
+
+def rgb(r, g, b):
+    return f'\033[38;2;{r};{g};{b}m'
+
+cyan = rgb(120, 220, 232)     # ~ "#78DCE8"
+pink = rgb(255, 97, 136)      # ~ "#FF6188"
+reset = Style.RESET_ALL
 
 ######################### ORBITAL ELEMENTS #########################
 
@@ -16,7 +33,7 @@ coe = np.array([
     np.deg2rad(98.39),   # inclination
     np.deg2rad(10),      # RAAN
     np.deg2rad(233),     # argument of periapsis
-    127.0                # true anomaly
+    np.deg2rad(127.0)    # true anomaly
 ])
 
 
@@ -39,30 +56,58 @@ tol = 10e-10
 
 def run(): 
 
+
     #Solve Kepler's equation
-    E0 = solve_kepler(coe[1], coe[5], tol=tol)  # eccentric anomaly at t0 [rad]
-
-    #Compute initial Ture Anomaly
-    TA0 = 2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E0 / 2))  # true anomaly at t0 [rad]
-    print(f"True Anomaly at t0: {TA0:.4f} (rad)\n")
-
-    #check location along orbit
-    if np.pi/2 < TA0 < 1.5 * np.pi:
-        print('Satellite is near apoapsis\n')
-    else:
-        print('Satellite is near periapsis\n')
-
-
-    #compute orbital period of spacecraft
+    
+    # --- TIME KEEPER START ---
+    #start = time.perf_counter()
+    #end = time.perf_counter()
+    #print("⏱️  [Performance]")
+    #print(f"  Execution time         : {end - start:.6f} seconds\n")
+    # --- TIME KEEPER END ---
+        #compute orbital period of spacecraft
     n = np.sqrt(mu / coe[0]**3)                      # mean motion [rad/s]
     P = 2 * np.pi / n                                # orbital period [s]
 
-    print(f"Orbit Period P: {P:.4f} (s)")
-
+    print(f"\n{Fore.GREEN}{Style.BRIGHT}[Orbit Parameters]")
+    print(f"    Semi-major axis       (a)  : {coe[0]:.4f} [km]")
+    print(f"    Eccentricity          (e)  : {coe[1]:.4f}")
+    print(f"    Inclination           (i)  : {coe[2]:.4f} [rad]")
+    print(f"    RAAN                  (Ω)  : {coe[3]:.4f} [rad]")
+    print(f"    Argument of Periapsis (ω)  : {coe[4]:.4f} [rad]")
+    print(f"    True Anomaly          (M₀) : {coe[5]:.4f}")  
+    print(f"    Orbital Period        (P)  : {P:.4f} [s]\n")
+    
 
     #create time vector for plotting
     t0 = 0
     t = np.linspace(t0, P + t0, 1000)   # time vector [s]
+
+
+    
+    print(f"\n{Fore.GREEN}{Style.BRIGHT}[Kepler Solver]")
+    
+    E0, i = solve_kepler(coe[1], coe[5], tol=tol)  # eccentric anomaly at t0 [rad]
+    
+       
+    print(f"    Converged after        : {i} iterations")
+    print(f"    Eccentric Anomaly (E₀) : {E0:.4f} rad")
+
+
+    
+    # input("Press Enter to continue...\n")
+    
+
+    #Compute initial Ture Anomaly
+    TA0 = 2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E0 / 2))  # true anomaly at t0 [rad]
+    print(f"    True Anomaly (ν₀)      : {TA0:.4f} rad")
+
+
+    position_label = "Apoapsis" if np.pi/2 < TA0 < 1.5 * np.pi else "Periapsis"
+    print(f"    Satellite is near      : {position_label}\n")
+
+
+
 
     MAt = np.mod(coe[5] + n * (t - t0), 2 * np.pi)  # mean anomaly [rad]
 
@@ -74,9 +119,9 @@ def run():
 
     #solve Kepler's equation for each time step 
     for tt in range(len(t)):
-        E = solve_kepler(coe[1], MAt[tt], tol=tol)          # eccentric anomaly as a function of time
+        E, _ = solve_kepler(coe[1], MAt[tt], tol=tol)          # eccentric anomaly as a function of time
         E_matrix[tt] = E                                    # store E in array for plotting    
-
+        
         # True amomaly from eccentric anomaly
         TA[tt] = np.mod(
             2 * np.arctan2(
@@ -99,6 +144,12 @@ def run():
     )
 
     Xout = sol.y         # solution state vector at each time step 
+
+    print(f"{cyan}{Style.BRIGHT}[Initial State Vector]{reset}")
+    print("   ", np.array2string(Xout[:, 0], precision=6, suppress_small=True))
+
+    print(f"\n{pink}{Style.BRIGHT}[Final State Vector]")
+    print("   ", np.array2string(Xout[:, -1], precision=6, suppress_small=True))
 
     v_Xout = np.linalg.norm(Xout[3:6, :], axis=0)  # velocity magnitude at each time step
     r_Xout = np.linalg.norm(Xout[0:3, :], axis=0)  # position magnitude at each time step
@@ -178,9 +229,15 @@ def run():
     plt.tight_layout()  """
 
     
+    #plot True, Mean & Eccentric anomaly against time
+    #anomalyPlot(t, E_matrix, TA, MAt)
 
     #plot_specific_energy(coe, mu)
     plot_error_magnitudes(t, vdiff, rdiff)
+
+    #plot ECI orbit 
+    #plot_orbit_eci(X, Re, mu)
+    
 
 if __name__ == "__main__":
     run()
