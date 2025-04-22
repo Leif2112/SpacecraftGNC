@@ -1,82 +1,117 @@
 import numpy as np
-import plotly.graph_objects as go
+import pyvista as pv
+
 
 def plot_orbit_eci(X, Re, mu):
     """
-    3D ECI orbit around a real‐occluding Earth using Plotly.
+    Seam‑free 3‑D plot of an ECI orbit around a textured Earth.
 
     Parameters
     ----------
-    X  : ndarray, shape (6, N)
-         State history [x,y,z,vx,vy,vz] in km and km/s.
+    X  : (6, N) ndarray
+        ECI state history [r; v] in km and km·s⁻¹.
     Re : float
-         Earth radius (km).
+        Earth radius, km.
     mu : float
-         (ignored here) gravitational parameter.
+        Gravitational parameter, km³·s⁻².
     """
-    # --- build high‑res sphere mesh ---
-    phi   = np.linspace(0, np.pi,   100)
-    theta = np.linspace(0, 2*np.pi, 200)
-    Φ, Θ  = np.meshgrid(phi, theta)
-    xs = Re * np.sin(Φ) * np.cos(Θ)
-    ys = Re * np.sin(Φ) * np.sin(Θ)
-    zs = Re * np.cos(Φ)
+    # ──────────────────────────────────────────────────────────────────────────
+    # 1.  Plotter
+    # ──────────────────────────────────────────────────────────────────────────
+    pl = pv.Plotter(window_size=(800, 800))
+    pl.set_background("white")
 
-    earth = go.Mesh3d(
-        x=xs.flatten(), y=ys.flatten(), z=zs.flatten(),
-        alphahull=0,
-        opacity=1.0,
-        color='white',
-        flatshading=True,
-        showscale=False,
-        lighting=dict(ambient=0.6, diffuse=0.8, roughness=0.9),
-        lightposition=dict(x=100, y=200, z=0),
+    # ──────────────────────────────────────────────────────────────────────────
+    # 2.  Earth mesh with hand‑made UVs (361 × 180 → duplicates meridian)
+    # ──────────────────────────────────────────────────────────────────────────
+    earth_tex = pv.read_texture("src/gnc/visualisation/flat_earth.jpg")
+
+    # 361 θ segments  →  first and last longitude strips are *separate vertices*
+    earth = pv.Sphere(radius=Re, theta_resolution=361, phi_resolution=180)
+
+    # manual UV mapping (same maths you used originally)
+    pts = earth.points
+    x, y, z = pts.T
+    r_mag   = np.linalg.norm(pts, axis=1)
+
+    theta = np.arctan2(y, x)            # longitude  [−π, π]
+    theta[theta < 0.0] += 2 * np.pi     #            [0, 2π)
+
+    u = 1.0 - theta / (2 * np.pi)       # map 0 → east 180°, 0.5 → prime meridian
+    v = np.arccos(z / r_mag) / np.pi    # 0 → north‑pole, 1 → south‑pole
+    earth.active_texture_coordinates = np.c_[u, v].astype(np.float32)
+
+    # NO repeat: exactly one copy of the map
+    pl.add_mesh(
+        earth, texture=earth_tex,
+        smooth_shading=True, name="Earth"
     )
 
-    # --- plot orbit line slightly offset so it never clips the surface ---
-    offset = 1.001
-    r = X[:3, :] * offset
-    orbit = go.Scatter3d(
-        x=r[0], y=r[1], z=r[2],
-        mode='lines',
-        line=dict(color='#FF6188', width=4),
-        name='Orbit',
-    )
+    # ──────────────────────────────────────────────────────────────────────────
+    # 3.  Orbit line (lifted 0.1 % to avoid z‑fight)
+    # ──────────────────────────────────────────────────────────────────────────
+    r = X[:3, :] * 1.001                # tiny offset
+    orbit = pv.Line(r[:, 0], r[:, -1], resolution=r.shape[1] - 1)
+    orbit.points = r.T
+    pl.add_mesh(orbit, color="#FF6188", line_width=4, name="Orbit")
 
-    # --- start/end markers ---
-    markers = go.Scatter3d(
-        x=[r[0,0], r[0,-1]],
-        y=[r[1,0], r[1,-1]],
-        z=[r[2,0], r[2,-1]],
-        mode='markers',
-        marker=dict(size=6, color='#A9DC76'),
-        name='Start/End'
-    )
+    pl.add_mesh(pv.PolyData(r[:, 0]),  color="#A9DC76",
+                render_points_as_spheres=True, point_size=12)  # start
+    pl.add_mesh(pv.PolyData(r[:, -1]), color="#A9DC76",
+                render_points_as_spheres=True, point_size=12)  # end
 
-    # --- ECI axes ---
+    # ──────────────────────────────────────────────────────────────────────────
+    # 4.  Perifocal triad at t₀
+    # ──────────────────────────────────────────────────────────────────────────
+    r0, v0 = X[:3, 0], X[3:6, 0]
+    h_vec = np.cross(r0, v0)
+    e_vec = np.cross(v0, h_vec) / mu - r0 / np.linalg.norm(r0)
+
+    i_e = e_vec / np.linalg.norm(e_vec)
+    i_h = h_vec / np.linalg.norm(h_vec)
+    i_p = np.cross(i_h, i_e)
+
+    origin = np.array([0.0, 0.0, 0.0])
+    arrow_len = Re * 1.5           # long enough to emerge past Earth’s surface
+
+    for vec, lbl in [(i_e, "$i_e$"), (i_p, "$i_p$"), (i_h, "$i_h$")]:
+        start = origin
+        end   = origin + vec * arrow_len
+
+        line = pv.Line(start, end)
+        pl.add_mesh(line, color="#78DCE8", line_width=6, name=lbl)
+
+        pl.add_point_labels(
+            np.array([end]),
+            [lbl], text_color="#78DCE8", font_size=18, point_size=0
+        )
+
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # 5.  Inertial I‑J‑K axes
+    # ──────────────────────────────────────────────────────────────────────────
     L = Re * 1.6
-    axes = []
-    for vec, label in [((L,0,0),'I'), ((0,L,0),'J'), ((0,0,L),'K')]:
-        axes.append(go.Scatter3d(
-            x=[0, vec[0]], y=[0, vec[1]], z=[0, vec[2]],
-            mode='lines+text',
-            line=dict(color='black', width=3),
-            text=['', label],
-            textposition='top center',
-            textfont=dict(size=12),
-            showlegend=False
-        ))
+    axis_kw = dict(tip_length=Re * 0.15,
+                   tip_radius=Re * 0.08,
+                   shaft_radius=Re * 0.02)
 
-    # --- compose and show ---
-    fig = go.Figure(data=[earth, orbit, markers, *axes])
-    fig.update_layout(
-        scene=dict(
-            aspectmode='data',
-            xaxis=dict(title='Iₑ (km)', showbackground=False),
-            yaxis=dict(title='Jₑ (km)', showbackground=False),
-            zaxis=dict(title='Kₑ (km)', showbackground=False),
-        ),
-        margin=dict(l=0, r=0, t=30, b=0),
-        title="Spacecraft ECI Orbital Trajectory"
-    )
-    fig.show()
+    for vec, lbl in [((1, 0, 0), "I"), ((0, 1, 0), "J"), ((0, 0, 1), "K")]:
+        pl.add_mesh(
+            pv.Arrow(start=(0, 0, 0), direction=np.array(vec) * L, **axis_kw),
+            color="black"
+        )
+        pl.add_point_labels(
+            np.array(vec) * L * 1.15, [lbl],
+            font_size=20, text_color="black", point_size=0
+        )
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # 6.  Camera & render
+    # ──────────────────────────────────────────────────────────────────────────
+    pl.camera_position = [
+        (Re * 2.0, Re * 2.0, Re * 0.5),   # eye
+        (0.0, 0.0, 0.0),                  # focal point
+        (0.0, 0.0, 1.0),                  # view‑up
+    ]
+    pl.enable_anti_aliasing()
+    pl.show(title="Spacecraft ECI Orbital Trajectory")
