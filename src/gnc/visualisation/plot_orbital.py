@@ -21,27 +21,22 @@ def plot_orbit_eci(X, Re, mu):
     pl = pv.Plotter(window_size=(800, 800))
     pl.set_background("white")
 
-    # ──────────────────────────────────────────────────────────────────────────
-    # 2.  Earth mesh with hand‑made UVs (361 × 180 → duplicates meridian)
+       # ──────────────────────────────────────────────────────────────────────────
+    # 2. Seamless Earth sphere with custom UV mapping (GL-style)
     # ──────────────────────────────────────────────────────────────────────────
     earth_tex = pv.read_texture("src/gnc/visualisation/flat_earth.jpg")
 
-    # 361 θ segments  →  first and last longitude strips are *separate vertices*
-    earth = pv.Sphere(radius=Re, theta_resolution=361, phi_resolution=180)
+    # This trick forces PyVista to duplicate the seam vertices internally
+    earth = pv.Sphere(radius=Re, theta_resolution=360, phi_resolution=180,
+                      start_theta=270.001, end_theta=270)
 
-    # manual UV mapping (same maths you used originally)
+    # Manually assign UVs (GLSL equirectangular projection)
     pts = earth.points
-    x, y, z = pts.T
-    r_mag   = np.linalg.norm(pts, axis=1)
-
-    theta = np.arctan2(y, x)            # longitude  [−π, π]
-    theta[theta < 0.0] += 2 * np.pi     #            [0, 2π)
-
-    u = 1.0 - theta / (2 * np.pi)       # map 0 → east 180°, 0.5 → prime meridian
-    v = np.arccos(z / r_mag) / np.pi    # 0 → north‑pole, 1 → south‑pole
+    u = 0.5 + np.arctan2(-pts[:, 0], pts[:, 1]) / (2 * np.pi)
+    v = 0.5 + np.arcsin(pts[:, 2] / np.linalg.norm(pts, axis=1)) / np.pi
     earth.active_texture_coordinates = np.c_[u, v].astype(np.float32)
 
-    # NO repeat: exactly one copy of the map
+    # Apply the seamless texture
     pl.add_mesh(
         earth, texture=earth_tex,
         smooth_shading=True, name="Earth"
