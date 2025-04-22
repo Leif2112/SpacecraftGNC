@@ -7,7 +7,7 @@ from colorama.ansi import AnsiFore
 from gnc.simulation.sim import display_sim_dashboard, ascii_logo
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
 from gnc.integrators.ode113_like import ode113
-from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci
+from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
 
 from gnc.visualisation.plot_specific_energy import plot_specific_energy
 from gnc.visualisation.plot_posVelError import plot_error_magnitudes
@@ -76,7 +76,7 @@ def run():
 
     #create time vector for plotting
     t0 = 0
-    t = np.linspace(t0, 40000 + t0, 1000)   # time vector [s]
+    t = np.linspace(t0, P + t0, 1000)   # time vector [s]
     
     E0, i = solve_kepler(coe[1], coe[5], tol=tol)  # eccentric anomaly at t0 [rad]
     
@@ -113,15 +113,14 @@ def run():
         COE[:, tt] = np.array([ coe[0], coe[1], coe[2], coe[3], coe[4], TA[tt] ])
         X[:, tt] = coe_to_rv(COE[:, tt], mu)                # State vector from clasissical orbital elements to RV propagation
 
-    sol = ode113(
+    solECI = ode113(
         rhs = tbp_eci,
-        y0 = X[:6, 0],
+        y0 = X[:, 0],
         t_span = (t[0], t[-1]),
         t_eval = t,
-        mu = mu
+        args = (mu, )
     )
-
-    Xout = sol.y         # solution state vector at each time step 
+    Xout = solECI.y         # Equation of motion integration of the ECI TBP  
 
     v_Xout = np.linalg.norm(Xout[3:6, :], axis=0)  # velocity magnitude at each time step
     r_Xout = np.linalg.norm(Xout[0:3, :], axis=0)  # position magnitude at each time step
@@ -134,7 +133,37 @@ def run():
     display_sim_dashboard(coe, P, E0, TA0, X, i)
     # Integrate equation of motion
 
-    
+
+    print("r_Xout min/max:", r_Xout.min(), r_Xout.max())
+    print("v_Xout min/max:", v_Xout.min(), v_Xout.max())
+    print("expected constant energy:", -mu / (2 * coe[0]))
+    print("mu =", mu)
+    print("a =", coe[0])
+    print("sp_e2 (constant) =", -mu / (2 * coe[0]))
+
+    #Compute specific energy of the spacecraft at every time step 
+    sp_e, sp_e2 = specific_energy(r_Xout, v_Xout, mu=mu, a=coe[0])
+
+
+    # --- Compute SC. initial conditions in ECEF frame ---
+    Omega = np.array([0.0, 0.0, we])
+    FI = np.eye(3)
+    r_eci = X[0:3, 0]
+    v_eci = X[3:6, 0]
+
+    X_ini_ECEF = np.concatenate((FI @ r_eci, FI @ v_eci - np.cross(Omega, r_eci)))
+    # -----------------------------------------------------
+
+    # integrate the equations of motion of the satellite in ECEF frame
+    solECEF = ode113(
+        rhs = tbp_ecef,
+        y0 = X[:, 0],
+        t_span = (t[0], t[-1]),
+        t_eval = t,
+        args = (mu, we)
+    )
+    X_ECEF = solECEF.y 
+
     '''
     # Inertia matrix [kg·m²] (example spacecraft)
     J = np.diag([2500.0, 5000.0, 6500.0])
@@ -209,14 +238,12 @@ def run():
         #plot True, Mean & Eccentric anomaly against time
         #anomalyPlot(t, E_matrix, TA, MAt)
 
-        #plot_specific_energy(coe, mu)
-        plot_error_magnitudes(t, vdiff, rdiff)
-
-         
-
-    #plot ECI orbit 
-    #plot_orbit_eci(X, Re, mu)
-    
+        #plot_specific_energy(t, sp_e, sp_e2)
+        #plot_error_magnitudes(t, vdiff, rdiff)
+   
+        #plot ECI orbit 
+        plot_orbit_eci(X, Re, mu)
+        
 
 if __name__ == "__main__":
     cli()

@@ -112,19 +112,15 @@ def tbp_eci(t: float, state: np.ndarray, mu: float) -> np.ndarray:
     a = -mu / norm_r**3 * r
     return np.concatenate((v, a))
 
-def tbp_ecef_rhs(t: float, state: np.ndarray, mu: float, omega_earth: float) -> np.ndarray:
+def tbp_ecef(t: float, state: np.ndarray, mu: float, we: float) -> np.ndarray:
     """
     Compute RHS of the two-body problem in the ECEF frame (including Coriolis and centrifugal terms).
 
     Parameters:
-        t : float
-            Time [s]
-        state : np.ndarray
-            6x1 state vector [x, y, z, vx, vy, vz] in ECEF frame
-        mu : float
-            Gravitational parameter [km^3/s^2]
-        omega_earth : float
-            Earth rotation rate [rad/s]
+        t : Time [s]
+        state : 6x1 state vector [x, y, z, vx, vy, vz] in ECEF frame
+        mu : Gravitational parameter [km^3/s^2]
+        we : Earth rotation rate [rad/s]
 
     Returns:
         dstate_dt : np.ndarray
@@ -132,7 +128,7 @@ def tbp_ecef_rhs(t: float, state: np.ndarray, mu: float, omega_earth: float) -> 
     """
     r = state[:3]
     v = state[3:]
-    w = np.array([0, 0, omega_earth])
+    w = np.array([0, 0, we])
 
     acc_gravity = -mu / np.linalg.norm(r) ** 3 * r
     acc_coriolis = -2 * np.cross(w, v)
@@ -140,3 +136,24 @@ def tbp_ecef_rhs(t: float, state: np.ndarray, mu: float, omega_earth: float) -> 
 
     a = acc_gravity + acc_coriolis + acc_centrifugal
     return np.concatenate((v, a))
+
+def specific_energy(r_Xout:np.ndarray, v_Xout: np.ndarray, mu: float, a: float):
+    """
+    Compute the specific energy of the spacecraft at every time step.
+    
+    Parameters: 
+        r_Xout : position mag. of SC @ every time step
+        v_Xout : velocity mag. of SC @ every time step
+        state : state vector of the SC in ECI frame
+        mu : Gravitational Paramter
+        a : Orbit semi-major axis
+
+     Returns:
+        sp_e : Specific energy at each time step
+        sp_e2 : Constant specific energy estimate from orbital mechanics: -mu / (2a)
+    """
+    
+    sp_e = 0.5 * v_Xout**2 - mu / r_Xout        # SC sp_e should be approx. constant 
+    sp_e2 = np.full_like(sp_e, -mu / (2 * a))   # filled with the constant value -GM / (2*a) @ every t
+
+    return sp_e, sp_e2

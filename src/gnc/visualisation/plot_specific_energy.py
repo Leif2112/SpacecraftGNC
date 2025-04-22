@@ -1,63 +1,66 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from gnc.dynamics.orbital import coe_to_rv
+import numpy as np
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-def plot_specific_energy(coe: np.ndarray, mu: float):
-    """
-    Plot specific orbital energy as a function of true anomaly.
+def plot_specific_energy(t, sp_e, sp_e2):
+    fig, ax1 = plt.subplots(figsize=(17.6/2.54, 0.75 * 17.6 / 2.54))  # ~(7in, 5in)
 
-    Parameters:
-        coe : np.ndarray
-            Classical orbital elements [a, e, i, RAAN, argp, TA]
-        mu : float
-            Gravitational parameter (km^3/s^2)
-    """
-    nu_array = np.linspace(0, 2*np.pi, 500)
-    zeta1 = -mu / (2 * coe[0])
-    zeta1_arr = np.full_like(nu_array, zeta1)
-    zeta2_arr = []
+    # Background color
+    ax1.set_facecolor("white")
+    fig.patch.set_facecolor("white")
 
-    for nu in nu_array:
-        coe_copy = coe.copy()
-        coe_copy[-1] = nu
-        state = coe_to_rv(coe_copy, mu)
-        r = np.linalg.norm(state[:3])
-        v = np.linalg.norm(state[3:])
-        zeta2 = 0.5 * v**2 - mu / r
-        zeta2_arr.append(zeta2)
+    # Plot theoretical energy on left axis
+    ax1.plot(t, sp_e2, linewidth=2, linestyle='-', color="#FF6188", label=r'$\zeta_1 = -\mu / (2a)$')
+    ax1.set_xlabel("Time $t$ (s)", fontsize=13)
+    ax1.set_ylabel("Specific Energy $\zeta_1$ (km$^2$/s$^2$)", fontsize=12, color="#FF6188")
+    ax1.tick_params(axis='y', labelcolor="#FF6188", labelsize=11)
+    ax1.tick_params(axis='x', labelsize=11)
+    ax1.spines['left'].set_color("#FF6188")
+    ax1.set_ylim(np.min(sp_e2) - 0.2, np.max(sp_e2) + 0.2)
 
-    zeta2_arr = np.array(zeta2_arr)
-    sp_diff = np.abs(zeta2_arr - zeta1_arr)
-
-    # Plot with two y-axes
-    fig, ax1 = plt.subplots(figsize=(10, 5))
-    fig.patch.set_facecolor("#2e2e2e")
-    ax1.set_facecolor("#2e2e2e")
-    theta_deg = np.rad2deg(nu_array)
-
+    # Plot computed energy on right axis
     ax2 = ax1.twinx()
-    ax2.set_facecolor("#2e2e2e")
-    ax2.plot(theta_deg, zeta2_arr, label=r"$\zeta_2 = \frac{v^2}{2} - \frac{\mu}{r}$", color="#78DCE8", linewidth=1.5)
-    ax2.set_ylabel("specific energy $\zeta$ $(km^2/s^2)$", color="#78DCE8")
-    ax2.tick_params(axis='y', labelcolor="#78DCE8")
-    ax2.spines['right'].set_color('white')
+    ax2.plot(t, sp_e, linewidth=2, color="#78DCE8", label=r'$\zeta_2 = v^2/2 - \mu/r$')
+    ax2.tick_params(axis='y', labelcolor='none', color='none')
+    ax2.yaxis.label.set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.set_ylabel("Specific Energy $\zeta_2$ (km$^2$/s$^2$)", fontsize=12, color="#78DCE8")
+    ax2.spines['right'].set_color("#78DCE8")
+    ax2.set_ylim(np.min(sp_e) - 0.2, np.max(sp_e) + 0.2)
 
-    ax1.plot(theta_deg, zeta1_arr, label=r"$\zeta_1 = -\frac{\mu}{2a}$", color="#FF6188", linewidth=1.5)
-    ax1.set_xlabel("True Anomaly $\nu$ (degrees)", color="white")
-    ax1.set_ylabel("specific energy $\zeta$ $(km^2/s^2)$", color="#FF6188")
-    ax1.tick_params(axis='x', labelcolor="white")
-    ax1.tick_params(axis='y', labelcolor="#FF6188")
+    # Grid
+    ax1.grid(True, linestyle='--', linewidth=0.5, color='gray', alpha=0.5)
 
-    # White plot box (spines)
-    for spine in ax1.spines.values():
-        spine.set_edgecolor('white')
-    for spine in ax2.spines.values():
-        spine.set_edgecolor('white')
+    # Title
+    ax1.set_title("Conservation of Specific Orbital Energy", fontsize=14, weight='bold', pad=15)
 
-    fig.suptitle("Specific Energy vs True Anomaly", fontsize=14, color='white')
+    # Combined legend
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, loc='best', frameon=True, edgecolor='black', fontsize=11)
+
+    # Inset for zoomed-in deviation of ζ2
+    ax_inset = inset_axes(ax1, width="30%", height="35%", loc='lower right', borderpad=2)
+
+    delta_e = sp_e - sp_e[0]
+    ax_inset.plot(t, delta_e, color="#78DCE8", linewidth=1)
+    ax_inset.axhline(0, color="red", linewidth=0.5, linestyle='--')
+    ax_inset.set_xlim(t[0], t[-1])
+    ax_inset.set_ylim(-1e-11, 1e-11)
+    ax_inset.set_yticks([-0.5e-11, 0.0, 0.5e-11])
+    ax_inset.set_xticks([])
+    ax_inset.tick_params(labelsize=8)
+    ax_inset.grid(True, linestyle='--', linewidth=0.4)
+
+    # Overlay zoom label directly in the inset (top-left corner of the inset axes)
+    ax_inset.text(
+        0.02, 0.95,
+        r"Zoom: $\Delta \zeta_2$",
+        transform=ax_inset.transAxes,
+        fontsize=9,
+        verticalalignment='top',
+        bbox=dict(facecolor='white', alpha=0.8, edgecolor='none', boxstyle='round,pad=0.2')
+    )
+
     fig.tight_layout()
-    fig.subplots_adjust(top=0.9)
-    ax1.grid(True, color="#444444")
-    ax1.legend(loc="upper right", facecolor="#2e2e2e", edgecolor="white", labelcolor='white')
-    ax2.legend(loc="upper left", facecolor="#2e2e2e", edgecolor="white", labelcolor='white')
     plt.show()
