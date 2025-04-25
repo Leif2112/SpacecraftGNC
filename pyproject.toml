@@ -1,7 +1,7 @@
 # pyproject.toml  (project root)
 
 [tool.poetry]
-name        = "spacecraft-gnc"
+name        = "GNC"
 version     = "0.1.0"
 description = "Python port of spacecraft dynamics & attitude control toolbox"
 authors     = ["Leif Tinwell <leiftinwell@rocketmail.com>"]

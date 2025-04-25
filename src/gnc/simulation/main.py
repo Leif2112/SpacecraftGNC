@@ -4,15 +4,18 @@ from colorama import init, Fore, Style
 from colorama.ansi import AnsiFore
 
 
-from gnc.simulation.sim import display_sim_dashboard, ascii_logo
+from gnc.simulation.sim import display_sim_dashboard
+
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
+from gnc.attitude.orientation import rota121
+
 from gnc.integrators.ode113_like import ode113
 from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
 
 from gnc.visualisation.plot_specific_energy import plot_specific_energy
 from gnc.visualisation.plot_posVelError import plot_error_magnitudes
 from gnc.visualisation.plot_anomalyVStime import anomalyPlot
-from gnc.visualisation.plot_orbital import plot_orbit_eci
+from gnc.visualisation.plot_orbital import plot_orbit_eci, plot_orbit_ecef
 
 
 # Initialize colorama once
@@ -37,7 +40,7 @@ coe = np.array([
     np.deg2rad(98.39),     # inclination
     np.deg2rad(10),      # RAAN
     np.deg2rad(233),     # argument of periapsis
-    np.deg2rad(127.0)    # true anomaly
+    np.deg2rad(127)    # true anomaly
 ])
 
 
@@ -134,13 +137,6 @@ def run():
     # Integrate equation of motion
 
 
-    print("r_Xout min/max:", r_Xout.min(), r_Xout.max())
-    print("v_Xout min/max:", v_Xout.min(), v_Xout.max())
-    print("expected constant energy:", -mu / (2 * coe[0]))
-    print("mu =", mu)
-    print("a =", coe[0])
-    print("sp_e2 (constant) =", -mu / (2 * coe[0]))
-
     #Compute specific energy of the spacecraft at every time step 
     sp_e, sp_e2 = specific_energy(r_Xout, v_Xout, mu=mu, a=coe[0])
 
@@ -154,15 +150,40 @@ def run():
     X_ini_ECEF = np.concatenate((FI @ r_eci, FI @ v_eci - np.cross(Omega, r_eci)))
     # -----------------------------------------------------
 
+    t_span = (0, 10 * P)
+    t_eval = np.linspace(t_span[0], t_span[1], 10000)
     # integrate the equations of motion of the satellite in ECEF frame
     solECEF = ode113(
         rhs = tbp_ecef,
-        y0 = X[:, 0],
-        t_span = (t[0], t[-1]),
-        t_eval = t,
+        y0 = X_ini_ECEF,
+        t_span=t_span,
+        t_eval = t_eval,
         args = (mu, we)
     )
     X_ECEF = solECEF.y 
+    """print(f"Initial State in ECEF: {X_ECEF[:, 0]}")
+    print(f"Final State in ECEF: {X_ECEF[:, -1]}")"""
+
+
+
+    # -------------- ATTITUDE --------------
+
+    #initial position and velocity in the ECI frame 
+    r6 = np.array([6768.27, 870.90, 2153.59])
+    v6 = np.array([-2.0519, -1.4150, 7.0323])
+
+    #initial Euler Angles
+    alpha = np.deg2rad(30)
+    beta = np.deg2rad(20)
+    gamma = np.deg2rad(10)
+    EulerAng = [alpha, beta, gamma]
+
+    #compute rotation from orbital to body frame 
+    R_BO = rota121(EulerAng)
+
+    print(f"R_BO DCM : {R_BO}")
+
+
 
     '''
     # Inertia matrix [kg·m²] (example spacecraft)
@@ -230,11 +251,11 @@ def run():
     plt.tight_layout()  """
 
     # ------------ PLOTS ------------ 
-     
-    response = input(f"\nRun plotting scripts? [{green}{Style.BRIGHT} Y{Style.RESET_ALL} / {Fore.RED}{Style.BRIGHT}N{Style.RESET_ALL} ]: ").strip().lower()
-    run_plots = response in ["y", "yes", "true", "1"]
+    plot_orbit_ecef(X_ECEF, Re)
+    #response = input(f"\nRun plotting scripts? [{green}{Style.BRIGHT} Y{Style.RESET_ALL} / {Fore.RED}{Style.BRIGHT}N{Style.RESET_ALL} ]: ").strip().lower()
+    #run_plots = response in ["y", "yes", "true", "1"]
 
-    if run_plots:
+    #if run_plots:
         #plot True, Mean & Eccentric anomaly against time
         #anomalyPlot(t, E_matrix, TA, MAt)
 
@@ -242,8 +263,11 @@ def run():
         #plot_error_magnitudes(t, vdiff, rdiff)
    
         #plot ECI orbit 
-        plot_orbit_eci(X, Re, mu)
+        #plot_orbit_eci(X, Re, mu)
+
         
+    
+    
 
 if __name__ == "__main__":
     cli()
