@@ -7,7 +7,7 @@ from colorama.ansi import AnsiFore
 from gnc.simulation.sim import display_sim_dashboard
 
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
-from gnc.attitude.orientation import rota121
+from gnc.attitude.orientation import rota121, OrbTo_EulAx
 
 from gnc.integrators.ode113_like import ode113
 from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
@@ -63,15 +63,6 @@ tol = 10e-10
 
 def run(): 
 
-    #Solve Kepler's equation
-    
-    # --- TIME KEEPER START ---
-    #start = time.perf_counter()
-    #end = time.perf_counter()
-    #print("⏱️  [Performance]")
-    #print(f"  Execution time         : {end - start:.6f} seconds\n")
-    # --- TIME KEEPER END ---
-    
     #compute orbital period of spacecraft
     n = np.sqrt(mu / coe[0]**3)                      # mean motion [rad/s]
     P = 2 * np.pi / n                                # orbital period [s]
@@ -79,19 +70,11 @@ def run():
 
     #create time vector for plotting
     t0 = 0
-    t = np.linspace(t0, P + t0, 1000)   # time vector [s]
+    t = np.linspace(t0, P + t0, 1000)
     
-    E0, i = solve_kepler(coe[1], coe[5], tol=tol)  # eccentric anomaly at t0 [rad]
-    
-    # input("Press Enter to continue...\n")
-
-    #Compute initial Ture Anomaly
+    E0, i = solve_kepler(coe[1], coe[5], tol=tol)                               # eccentric anomaly at t0 [rad]
     TA0 = 2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E0 / 2))  # true anomaly at t0 [rad]
-
-
-
-    MAt = np.mod(coe[5] + n * (t - t0), 2 * np.pi)  # mean anomaly [rad]
-
+    MAt = np.mod(coe[5] + n * (t - t0), 2 * np.pi)                              # mean anomaly [rad]
 
     E_matrix = np.zeros(len(t))
     TA = np.zeros(len(t))
@@ -134,8 +117,6 @@ def run():
 
     
     display_sim_dashboard(coe, P, E0, TA0, X, i)
-    # Integrate equation of motion
-
 
     #Compute specific energy of the spacecraft at every time step 
     sp_e, sp_e2 = specific_energy(r_Xout, v_Xout, mu=mu, a=coe[0])
@@ -148,7 +129,7 @@ def run():
     v_eci = X[3:6, 0]
 
     X_ini_ECEF = np.concatenate((FI @ r_eci, FI @ v_eci - np.cross(Omega, r_eci)))
-    # -----------------------------------------------------
+    # -------------- 10 Orbits -----------------------------
 
     t_span = (0, 10 * P)
     t_eval = np.linspace(t_span[0], t_span[1], 10000)
@@ -161,10 +142,6 @@ def run():
         args = (mu, we)
     )
     X_ECEF = solECEF.y 
-    """print(f"Initial State in ECEF: {X_ECEF[:, 0]}")
-    print(f"Final State in ECEF: {X_ECEF[:, -1]}")"""
-
-
 
     # -------------- ATTITUDE --------------
 
@@ -176,14 +153,23 @@ def run():
     alpha = np.deg2rad(30)
     beta = np.deg2rad(20)
     gamma = np.deg2rad(10)
+    
     EulerAng = [alpha, beta, gamma]
-
-    #compute rotation from orbital to body frame 
-    R_BO = rota121(EulerAng)
-
+    R_BO = rota121(EulerAng)        #compute rotation from orbital to body frame 
     print(f"R_BO DCM : {R_BO}")
 
+    EulAx, EulerAng_BO = OrbTo_EulAx(r6, v6, R_BO)
 
+    # Quaternion representation 
+    q123 = EulAx * np.sin(EulerAng_BO / 2)
+    q4 = np.cos(EulerAng_BO / 2)
+    q = np.append(q123, q4)
+    scale = np.linalg.norm(q)
+    q = q / scale
+    norm_q = np.linalg.norm(q)
+
+    print(f"‖q̅_IB‖ = {norm_q:.6f}")
+    print(f"Normalised Quaternion : {q}")
 
     '''
     # Inertia matrix [kg·m²] (example spacecraft)
