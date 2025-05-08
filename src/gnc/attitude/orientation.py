@@ -65,5 +65,46 @@ def OrbTo_EulAx(r6: np.array, v6: np.array, R_BO: np.ndarray):
 
     return EulAx, EulAng_BO
 
+def EulTo_Quat(EulAx: float, EulAng: np.ndarray):
+    '''
+    Function to convert an Euler rotation to quaternion representation. 
+    This will become obsolete once attitude determination is implemented. This is a placeholder. 
+    A quaternion can be defined in terms of the principal rotation components as:
 
+    q = 𝒆̂ sin Φ / 2
+    q4 = cos Φ / 2
+    '''
 
+    q123 = EulAx * np.sin(EulAng/ 2)
+    q4 = np.cos(EulAng / 2)
+    q = np.append(q123, q4)
+    scale = np.linalg.norm(q)
+    q /= scale
+    
+    return q
+
+def QuatTo_DCM(q: np.ndarray):
+    """
+    DCM for Inertial to Body Frame rotation in quaternion form.
+    The rotation matrix can be constructed from the quaternion as : 
+    𝑹 = (𝑞42 − 𝒒𝑇)𝑰𝟑 + 𝟐𝒒𝒒𝑇 − 2𝑞4𝒒×
+
+    which develops as follows.
+    """
+    q1, q2, q3, q4 = q
+
+    return np.array([
+        [q1**2 - q2**2 - q3**2 + q4**2, 2*(q1*q2 + q4*q3),              2*(q1*q3 - q4*q2)],
+        [2*(q1*q2 - q4*q3),             -q1**2 + q2**2 - q3**2 + q4**2, 2*(q2*q3 + q4*q1)],
+        [2*(q1*q3 + q4*q2),             2*(q2*q3 - q4*q1),              -q1**2 - q2**2 + q3**2 + q4**2]
+    ])
+
+def dcmTo_Eul(dcm: np.ndarray):
+    """
+    The DCM to rotate from Inertial to Body Frame can also be performed as a 3-2-1 sequence about [𝜓, 𝜃, 𝜙] 
+    """
+    psi = np.arctan2(dcm[0,1], dcm[0,0])
+    theta = np.arcsin(-dcm[0,2])
+    phi = np.arctan2(dcm[1,2], dcm[2,2])
+
+    return psi, theta, phi
