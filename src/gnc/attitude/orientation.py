@@ -37,7 +37,7 @@ def rota121(EulerAng: np.ndarray):
 
 def OrbTo_EulAx(r6: np.array, v6: np.array, R_BO: np.ndarray):
     """
-    Determine Euler andgles and principle axes from orbital state
+    Determine Euler angles and principle axes from orbital state
     """ 
 
     O1 = r6 / np.linalg.norm(r6)
@@ -45,20 +45,21 @@ def OrbTo_EulAx(r6: np.array, v6: np.array, R_BO: np.ndarray):
     O3 = h6 / np.linalg.norm(h6)
     O2 = np.cross (O3, O1)
 
-    #DCM from inertial to orbital frame
-
+    #DCM that converts the state of the spacecraft from orbital frame to ECI frame is determined given R_IO = (R_OI)^T --> transpose of R_OI 
     R_OI = np.array([
         [O1[0], O1[1], O1[2]],
         [O2[0], O2[1], O2[2]],
         [O3[0], O3[1], O3[2]]
     ])
-
-    R_BI = R_BO @ R_OI
     
+    #then the DCM from ECI frame to body frame, by definition, is R_BI = R_BO * R_OI
+    R_BI = R_BO @ R_OI
+   
     EulAng_BO = np.acos((np.trace(R_BI) - 1) / 2)   #Determine Euler angles to rotate from Orbital to Body frame
     EulAX_1 = (R_BI[1, 2] - R_BI[2, 1]) / (2 * np.sin(EulAng_BO))
     EulAX_2 = (R_BI[2, 0] - R_BI[0, 2]) / (2 * np.sin(EulAng_BO))
     EulAX_3 = (R_BI[0, 1] - R_BI[1, 0]) / (2 * np.sin(EulAng_BO))
+
 
     EulAx = np.array([EulAX_1, EulAX_2, EulAX_3])
 

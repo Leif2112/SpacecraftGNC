@@ -35,7 +35,7 @@ def cli():
 ######################### ORBITAL ELEMENTS #########################
 
 coe = np.array([
-    7151.6,              # semi-major axis [km]
+    7151.16,              # semi-major axis [km]
     0.0008,              # eccentricity
     np.deg2rad(98.39),     # inclination
     np.deg2rad(10),      # RAAN
@@ -156,7 +156,6 @@ def run():
     
     EulerAng = [alpha, beta, gamma]
     R_BO = rota121(EulerAng)        #compute rotation from orbital to body frame 
-    print(f"R_BO DCM : {R_BO}")
 
     EulAx, EulerAng_BO = OrbTo_EulAx(r6, v6, R_BO)
 
@@ -168,8 +167,8 @@ def run():
     q = q / scale
     norm_q = np.linalg.norm(q)
 
-    print(f"‖q̅_IB‖ = {norm_q:.6f}")
-    print(f"Normalised Quaternion : {q}")
+    """    print(f"‖q̅_IB‖ = {norm_q:.6f}")
+    print(f"Normalised Quaternion : {q}")"""
 
     '''
     # Inertia matrix [kg·m²] (example spacecraft)
@@ -237,11 +236,11 @@ def run():
     plt.tight_layout()  """
 
     # ------------ PLOTS ------------ 
-    plot_orbit_ecef(X_ECEF, Re)
-    #response = input(f"\nRun plotting scripts? [{green}{Style.BRIGHT} Y{Style.RESET_ALL} / {Fore.RED}{Style.BRIGHT}N{Style.RESET_ALL} ]: ").strip().lower()
-    #run_plots = response in ["y", "yes", "true", "1"]
+    #plot_orbit_ecef(X_ECEF, Re)
+    response = input(f"\nRun plotting scripts? [{green}{Style.BRIGHT} Y{Style.RESET_ALL} / {Fore.RED}{Style.BRIGHT}N{Style.RESET_ALL} ]: ").strip().lower()
+    run_plots = response in ["y", "yes", "true", "1"]
 
-    #if run_plots:
+    if run_plots:
         #plot True, Mean & Eccentric anomaly against time
         #anomalyPlot(t, E_matrix, TA, MAt)
 
@@ -249,7 +248,7 @@ def run():
         #plot_error_magnitudes(t, vdiff, rdiff)
    
         #plot ECI orbit 
-        #plot_orbit_eci(X, Re, mu)
+        plot_orbit_eci(X, Re, mu)
 
         
     

@@ -24,7 +24,7 @@ ascii_logo = [
     f"{CYBER}      +++++###++++....       {RESET}",
     f"{CYBER}     +++++#### ++++.....     {RESET}",
     f"{CYBER}    +++++####   ++++.....    {RESET}",
-    f"{CYBER}   +++++####     ++++....-   {RESET}",
+    f"{CYBER}   +++++####     ++++.....   {RESET}",
     f"{CYBER}  +++++####       ++++.....  {RESET}",
     f"{CYBER} +++++####.................. {RESET}",
     f"{CYBER}+++++####....................{RESET}",
@@ -39,8 +39,7 @@ def display_sim_dashboard(coe, P, E0, TA0, X, kepler_iters):
     state_fmt = lambda vec: np.array2string(
     vec,
     precision=4,
-    separator=', ',
-    suppress_small=False,
+    formatter={'float_kind': lambda x: f"{x:.4f}"},
     max_line_width=999
     )
 
@@ -53,12 +52,11 @@ def display_sim_dashboard(coe, P, E0, TA0, X, kepler_iters):
         f"{CYBER}       True Anomaly{RESET}          (M₀) | {np.rad2deg(coe[5]):.2f}°",
         "",
         f"{CYBER}       Orbital Period{RESET}        (P)  | {P:.2f} s",
-        f"{CYBER}       Eccentric Anomaly{RESET}          | {E0:.4f} rad",
         f"{CYBER}       Convergence {RESET}               | {kepler_iters}",
         f"{CYBER}       Location along orbit{RESET}       | {position_label}",
         "",
-        f"{CYAN_VEC}       Initial State Vector{RESET}        {state_fmt(X[:, 0])}",
-        f"{PINK_VEC}       Final State Vector{RESET}          {state_fmt(X[:, -1])}",
+        f"{CYAN_VEC}       Initial State Vector{RESET}       {state_fmt(X[:, 0])}",
+        f"{PINK_VEC}       Final State Vector{RESET}         {state_fmt(X[:, -1])}",
     ]
 
     logo_height = len(ascii_logo)
