@@ -108,3 +108,27 @@ def dcmTo_Eul(dcm: np.ndarray):
     phi = np.arctan2(dcm[1,2], dcm[2,2])
 
     return psi, theta, phi
+
+def QuatTo_Eul(Q: np.ndarray):
+    """
+    Convert quaternion to 3-2-1 Euler angles : [yaw (ψ), pitch (θ), roll (φ)]
+
+    Returns angles in radians.
+    """
+    if Q.shape[0] == 7:
+        Q = Q[0:4, :]  # extract quaternions if full state passed
+
+    N = Q.shape[1]
+    eul = np.zeros((3, N))  # yaw, pitch, roll
+
+    for i in range(N):
+        qw, qx, qy, qz = Q[:, i]
+        # yaw (Z)
+        psi = np.arctan2(2 * (qw*qz + qx*qy), 1 - 2 * (qy**2 + qz**2))
+        # pitch (Y)
+        theta = -np.arcsin(2 * (qx*qz - qw*qy))
+        # roll (X)
+        phi = np.arctan2(2 * (qw*qx + qy*qz), 1 - 2 * (qx**2 + qy**2))
+        eul[:, i] = [psi, theta, phi]
+
+    return eul

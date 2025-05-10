@@ -1,21 +1,27 @@
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 from colorama import init, Fore, Style
 from colorama.ansi import AnsiFore
 
-
 from gnc.simulation.sim import display_sim_dashboard
 
+from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
+from gnc.dynamics.attitude import AttitudeDynamics, q_AttitudeDynamics, angularMomentum, KineticEnergy 
+
 from gnc.attitude.rigid_body import attitude_rhs, axis_angle_to_quaternion
-from gnc.attitude.orientation import rota121, OrbTo_EulAx, EulTo_Quat, QuatTo_DCM, dcmTo_Eul
+from gnc.attitude.orientation import rota121, OrbTo_EulAx, EulTo_Quat, QuatTo_DCM, dcmTo_Eul, QuatTo_Eul
 
 from gnc.integrators.ode113_like import ode113
-from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
 
 from gnc.visualisation.plot_specific_energy import plot_specific_energy
 from gnc.visualisation.plot_posVelError import plot_error_magnitudes
 from gnc.visualisation.plot_anomalyVStime import anomalyPlot
 from gnc.visualisation.plot_orbital import plot_orbit_eci, plot_orbit_ecef
+from gnc.visualisation.plot_eulAng import plot_euler_angles
+from gnc.visualisation.plot_angVel import plot_angular_velocity
+from gnc.visualisation.plot_angularMomentum import plot_angular_momentum
+
 
 
 # Initialize colorama once
@@ -55,6 +61,7 @@ Im = np.array([          # Spacecraft inertia matrix [kg·m²]
     [0,    0,    6500]
 ])
 
+AngVel = np.array([-3.092e-4, 6.6161e-4, 7.4606e-4])
 
 tol = 10e-10         
 
@@ -129,15 +136,15 @@ def run():
     v_eci = X[3:6, 0]
 
     X_ini_ECEF = np.concatenate((FI @ r_eci, FI @ v_eci - np.cross(Omega, r_eci)))
+    
     # -------------- 10 Orbits -----------------------------
-
     t_span = (0, 10 * P)
     t_eval = np.linspace(t_span[0], t_span[1], 10000)
     # integrate the equations of motion of the satellite in ECEF frame
     solECEF = ode113(
         rhs = tbp_ecef,
         y0 = X_ini_ECEF,
-        t_span=t_span,
+        t_span = t_span,
         t_eval = t_eval,
         args = (mu, we)
     )
@@ -154,8 +161,16 @@ def run():
     beta = np.deg2rad(20)
     gamma = np.deg2rad(10)
 
+    t2 = np.linspace(0, 3600, 360)
+
     '''This is where the attitude determination algo should go, removing the need for hard coded example.
-        Avoid using anything other than quaternions --> no euler angles please, unless using for plots'''
+        Avoid using anything other than quaternions --> no euler angles please, unless using for plots
+        
+        In GNC systems, the attitude is not propagated indefinitely, regularly corrected by a filter, such as:
+        Extended Kalman Filter
+        Unscented Kalman Filter
+        Each measurement update phase re-normalises the quaternion --> TODO implement sensor observation.
+        '''
     
     EulerAng = [alpha, beta, gamma]                     #initial Euler Angles
     
@@ -164,9 +179,30 @@ def run():
     EulAx, EulerAng_BO = OrbTo_EulAx(r6, v6, R_BO)      #compute Euler angles and principle axis to rotate from Orbital to Body Frame
     q = EulTo_Quat(EulAx, EulerAng_BO)                  #compute quaternion representation of Euler rotation
     q_BI = QuatTo_DCM(q)
-    
-    psi, theta, phi = np.around(dcmTo_Eul(q_BI), 4)
-    EulAng_BI = [psi, theta, phi]
+    Q_ini_Att = np.concatenate((q, AngVel))
+
+    # Propagate quaternions
+    solAttQ = ode113(
+        rhs= q_AttitudeDynamics,
+        y0= Q_ini_Att,
+        t_span= (t2[0], t2[-1]),
+        t_eval= t2,
+        args= (Im, )
+    )
+
+    Q_Att = solAttQ.y
+    Q_Att[0:4, :] = Q_Att[0:4, :] / np.linalg.norm(Q_Att[0:4, :], axis=0)
+    X_Att = QuatTo_Eul(Q_Att)                           #convert quaternions to euler angles for visualisation 
+                                                        # --> for plotting & kinetic energy + angular momentum
+
+
+    #------------- ANGULAR MOMENTUM & ROTATIONAL KINETIC ENERGY -------------
+    '''Compute angular momentum & rotational kinetic energy over time using quaternion-integrated angular velocities.
+    Set stepwise=True to compute it manually at each timestep (useful for debugging or time-varying inertia).
+    Set stepwise=False (default) for faster vectorised computation — recommended for constant inertia.'''
+
+    H, Hmag = angularMomentum(Q_Att, Im, stepwise=True)
+    T, Tmag = KineticEnergy(Q_Att, Im, stepwise=False)
 
 
     # ------------ PLOTS ------------ 
@@ -182,7 +218,13 @@ def run():
         #plot_error_magnitudes(t, vdiff, rdiff)
    
         #plot ECI orbit 
-        plot_orbit_eci(X, Re, mu)
+        #plot_orbit_eci(X, Re, mu)
+
+        #plot attitude of spacecraft over time 
+        #plot_euler_angles(t2, X_Att)
+        #plot_angular_velocity(t2, Q_Att[4:7, :])
+
+        plot_angular_momentum(t2, Hmag)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,45 @@
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
+import numpy as np
+
+def plot_angular_velocity(t2: np.ndarray, omega: np.ndarray) -> None:
+    """
+    Plot angular velocity components over time in LaTeX style.
+
+    Parameters
+    ----------
+    t2 : np.ndarray
+        Time array (1D).
+    omega : np.ndarray
+        Angular velocity array (3 x N), where rows are [wx; wy; wz].
+    """
+    # Set LaTeX font and style
+    rcParams['text.usetex'] = False
+    rcParams['font.size'] = 20
+    rcParams['legend.fontsize'] = 15
+
+    # Colours and labels
+    colors = ["#FF6188", "#78DCE8", "#AB9DF2"]
+    labels = [r"$\omega_x$", r"$\omega_y$", r"$\omega_z$"]
+
+    # Create figure with size matching MATLAB (cm → inches)
+    picturewidth = 17.6  # cm
+    hw_ratio = 0.75
+    figsize = (picturewidth / 2.54, (hw_ratio * picturewidth) / 2.54)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.plot(t2, omega[0, :], color=colors[0], linewidth=1.5, label=labels[0])
+    ax.plot(t2, omega[1, :], color=colors[1], linewidth=1.5, label=labels[1])
+    ax.plot(t2, omega[2, :], color=colors[2], linewidth=1.5, label=labels[2])
+
+    ax.set_xlabel(r'time $t$ $(s)$')
+    ax.set_ylabel(r'Angular velocity $\omega$ $(rad/s)$')
+    ax.set_xlim([np.min(t2), np.max(t2)])
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.grid(True)
+    ax.spines['left'].set_color('black')
+    ax.yaxis.label.set_color('black')
+
+    legend = ax.legend(loc='best', edgecolor='black')
+    plt.tight_layout()
+    plt.show()
