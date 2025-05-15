@@ -28,9 +28,9 @@ def plot_euler_angles(t2: np.ndarray, X_Att: np.ndarray) -> None:
     figsize = (picturewidth / 2.54, (hw_ratio * picturewidth) / 2.54)
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.plot(t2, X_Att[5, :], color=colors[0], linewidth=1.5, label=labels[0])
-    ax.plot(t2, X_Att[6, :], color=colors[1], linewidth=1.5, label=labels[1])
-    ax.plot(t2, X_Att[7, :], color=colors[2], linewidth=1.5, label=labels[2])
+    ax.plot(t2, X_Att[0, :], color=colors[0], linewidth=1.5, label=labels[0])
+    ax.plot(t2, X_Att[1, :], color=colors[1], linewidth=1.5, label=labels[1])
+    ax.plot(t2, X_Att[2, :], color=colors[2], linewidth=1.5, label=labels[2])
 
     ax.set_xlabel(r'time $t$ $(s)$')
     ax.set_ylabel(r'Euler angles $\Psi$ $(rad)$')

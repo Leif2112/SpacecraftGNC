@@ -1,12 +1,6 @@
-import platform
-import getpass
-import socket
 from colorama import init
 import numpy as np
 import os
-import time
-
-
 
 init(autoreset=True)
 
@@ -32,7 +26,7 @@ ascii_logo = [
     f"{CYBER}  +########################  {RESET}"
 ]
 
-def display_sim_dashboard(coe, P, E0, TA0, X, kepler_iters):
+def display_sim_dashboard(coe, P, TA0, X, kepler_iters):
     os.system('cls' if os.name == 'nt' else 'clear')  # clear the terminal
     position_label = "Apoapsis" if np.pi/2 < TA0 < 1.5 * np.pi else "Periapsis"
 
@@ -69,3 +63,4 @@ def display_sim_dashboard(coe, P, E0, TA0, X, kepler_iters):
     for l, r in zip(ascii_logo, info_lines):
         print(f"{l:<36} {r}")
     print("\n")
+

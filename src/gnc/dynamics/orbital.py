@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit
+from pyproj import Transformer
 
 @njit
 def solve_kepler(ecc: float, M: float, tol: float = 1e-10) -> tuple[float, int]:
@@ -137,6 +138,7 @@ def tbp_ecef(t: float, state: np.ndarray, mu: float, we: float) -> np.ndarray:
     a = acc_gravity + acc_coriolis + acc_centrifugal
     return np.concatenate((v, a))
 
+
 def specific_energy(r_Xout:np.ndarray, v_Xout: np.ndarray, mu: float, a: float):
     """
     Compute the specific energy of the spacecraft at every time step.
@@ -157,3 +159,4 @@ def specific_energy(r_Xout:np.ndarray, v_Xout: np.ndarray, mu: float, a: float):
     sp_e2 = np.full_like(sp_e, -mu / (2 * a))   # filled with the constant value -GM / (2*a) @ every t
 
     return sp_e, sp_e2
+

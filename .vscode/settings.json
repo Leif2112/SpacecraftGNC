@@ -75,13 +75,6 @@
             "badge": "⚙️"
         },
         {
-            "folderPath": "spacecraft_gnc\\src\\",
-            "badge": "🟢"
-        },
-        {
-            "folderPath": "spacecraft_gnc\\src\\gnc\\"
-        },
-        {
             "folderPath": "spacecraft_gnc\\src\\gnc\\attitude\\__pycache__\\",
             "color": "foldercolorizer.color_555555",
             "badge": "⭕"
@@ -94,6 +87,41 @@
         {
             "folderPath": "spacecraft_gnc\\src\\gnc\\simulation\\",
             "badge": "🟢"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\visualisation\\geoViz\\",
+            "color": "foldercolorizer.color_66cc00"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\ascii_globe\\",
+            "color": "foldercolorizer.color_6600ff"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\gnc\\",
+            "color": "foldercolorizer.color_990099"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\src\\",
+            "color": "foldercolorizer.color_00cc00"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\",
+            "color": "foldercolorizer.color_663366"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\ne_10m_admin_0_countries_lakes.cpg\\"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\ne_10m_admin_0_countries_lakes.dbf\\"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\ne_10m_admin_0_countries_lakes.prj\\"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\ne_10m_admin_0_countries_lakes.shp\\"
+        },
+        {
+            "folderPath": "spacecraft_gnc\\data\\ne_10m_admin_0_countries_lakes.shx\\"
         }
     ]
 }

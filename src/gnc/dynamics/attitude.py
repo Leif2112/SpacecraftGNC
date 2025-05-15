@@ -66,7 +66,9 @@ def q_AttitudeDynamics(t: float, Q: np.ndarray, Im: np.ndarray, torque_func=None
         tau = np.zeros(3)
 
     # Euler's equation with torque
-    gyro_term = np.cross(omega, Im @ omega)
+    omega = np.ravel(omega)         # ensures (3,)
+    Iomega = Im @ omega             # also (3,)
+    gyro_term = np.cross(omega, Iomega)
     omega_dot = np.linalg.solve(Im, tau - gyro_term)
     
     return np.concatenate([q_dot, omega_dot])

@@ -9,7 +9,10 @@ license     = "MIT"
 readme      = "README.md"
 
 # tell Poetry where your source package lives
-packages    = [{ include = "gnc", from = "src" }]
+packages    = [
+                { include = "gnc", from = "src"},
+                { include = "ascii_globe", from = "src"}
+            ]
 
 [tool.poetry.dependencies]
 python      = ">=3.11,<3.14"
@@ -22,9 +25,16 @@ psutil = "^7.0.0"
 pyvista = "^0.45.0"
 imageio = "^2.37.0"
 cartopy = "^0.24.1"
+windows-curses = {version = "^2.4.1", allow-prereleases = true}
+rich = "^14.0.0"
+textual = "^3.2.0"
+geopandas = "^1.0.1"
+shapely = "^2.1.0"
+pyqt6 = "^6.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
+pytest-qt = "^4.4.0"
 
 [tool.pytest.ini_options]
 addopts = "-ra -q"
@@ -36,3 +46,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 sim = "gnc.simulation.main:cli"
+ascii = "ascii_globe.main:main"

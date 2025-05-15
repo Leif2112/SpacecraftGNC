@@ -3,8 +3,10 @@ import time
 import matplotlib.pyplot as plt
 from colorama import init, Fore, Style
 from colorama.ansi import AnsiFore
+import curses
+import argparse
 
-from gnc.simulation.sim import display_sim_dashboard
+from .sim import display_sim_dashboard
 
 from gnc.dynamics.orbital import solve_kepler, coe_to_rv, tbp_eci, tbp_ecef, specific_energy
 from gnc.dynamics.attitude import AttitudeDynamics, q_AttitudeDynamics, angularMomentum, KineticEnergy 
@@ -21,7 +23,8 @@ from gnc.visualisation.plot_orbital import plot_orbit_eci, plot_orbit_ecef
 from gnc.visualisation.plot_eulAng import plot_euler_angles
 from gnc.visualisation.plot_angVel import plot_angular_velocity
 from gnc.visualisation.plot_angularMomentum import plot_angular_momentum
-
+from gnc.visualisation.plot_polhode import plot_polhode
+from gnc.visualisation.plot_groundTrack import plot_groundTrack
 
 
 # Initialize colorama once
@@ -36,7 +39,11 @@ pink = rgb(255, 97, 136)      # ~ "#FF6188"
 reset = Style.RESET_ALL
 
 def cli():
-    run()
+    parser = argparse.ArgumentParser(description="Run spacecraft GNC simulation.")
+    parser.add_argument("--ascii", action="store_true", help="Render ASCII ground track in terminal")
+    args = parser.parse_args()
+
+    run(ascii_plot=args.ascii)
 
 ######################### ORBITAL ELEMENTS #########################
 
@@ -68,7 +75,7 @@ tol = 10e-10
 
 #####################################################################
 
-def run(): 
+def run(ascii_plot=False): 
 
     #compute orbital period of spacecraft
     n = np.sqrt(mu / coe[0]**3)                      # mean motion [rad/s]
@@ -78,6 +85,7 @@ def run():
     #create time vector for plotting
     t0 = 0
     t = np.linspace(t0, P + t0, 1000)
+    t2 = np.linspace(0, 1000, 100)
     
     E0, i = solve_kepler(coe[1], coe[5], tol=tol)                               # eccentric anomaly at t0 [rad]
     TA0 = 2 * np.arctan(np.sqrt((1 + coe[1]) / (1 - coe[1])) * np.tan(E0 / 2))  # true anomaly at t0 [rad]
@@ -123,7 +131,7 @@ def run():
     vdiff = np.linalg.norm(diff[3:6, :], axis=0)   #vel error magnitude
 
     
-    display_sim_dashboard(coe, P, E0, TA0, X, i)
+    display_sim_dashboard(coe, P, TA0, X, i)
 
     #Compute specific energy of the spacecraft at every time step 
     sp_e, sp_e2 = specific_energy(r_Xout, v_Xout, mu=mu, a=coe[0])
@@ -161,8 +169,7 @@ def run():
     beta = np.deg2rad(20)
     gamma = np.deg2rad(10)
 
-    t2 = np.linspace(0, 3600, 360)
-
+    
     '''This is where the attitude determination algo should go, removing the need for hard coded example.
         Avoid using anything other than quaternions --> no euler angles please, unless using for plots
         
@@ -224,7 +231,10 @@ def run():
         #plot_euler_angles(t2, X_Att)
         #plot_angular_velocity(t2, Q_Att[4:7, :])
 
-        plot_angular_momentum(t2, Hmag)
+        #plot_angular_momentum(t2, Hmag)
+        #plot_polhode(H, Hmag, Im, T) TODO 
+        plot_groundTrack(X_ECEF, sat_name="ZHUHAI-1 01 (CAS-4A)")
+
 
 
 if __name__ == "__main__":

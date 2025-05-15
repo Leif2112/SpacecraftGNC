@@ -1,0 +1,12 @@
+.panel {
+    border: round white;
+    padding: 1;
+}
+
+#map {
+    width: 70%;
+}
+
+#telemetry {
+    width: 30%;
+}
