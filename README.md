@@ -1,25 +1,30 @@
 # 🛰️ Spacecraft GNC (Guidance, Navigation & Control)
+ ____  ____   __    ___  ____  ___  ____   __   ____  ____     ___  __ _   ___       
+/ ___)(  _ \ / _\  / __)(  __)/ __)(  _ \ / _\ (  __)(_  _)   / __)(  ( \ / __)      
+\___ \ ) __//    \( (__  ) _)( (__  )   //    \ ) _)   )(    ( (_ \/    /( (__       
+(____/(__)  \_/\_/ \___)(____)\___)(__\_)\_/\_/(__)   (__)    \___/\_)__) \___)    
 
-**Spacecraft GNC** is a modular simulation toolkit for spacecraft orbital dynamics and attitude control. Ported from a validated MATLAB implementation and grounded in theory from a dedicated research paper, this project provides a reproducible and extensible Python platform for GNC simulation.
+**Spacecraft GNC** is a modular simulation toolkit for spacecraft orbital dynamics and attitude control. Ported from a validated MATLAB implementation and grounded in theory from a dedicated research paper (link to paper), this project provides a Python platform for GNC simulation.
 
 ---
 
-## 📌 Features
+## Features
 
-- ✅ Propagate orbits using classical orbital elements (COEs)
-- ✅ Solve Kepler's equation via Newton-Raphson (with JIT acceleration)
-- ✅ Integrate the two-body problem (TBP) using a high-order Runge-Kutta method
-- ✅ Compare numerical and analytical solutions (energy, error diagnostics)
-- ✅ Plot:
+- Propagate orbits using classical orbital elements (COEs)
+- Solve Kepler's equation 
+- Integrate the two-body problem (TBP) using a high-order Runge-Kutta method
+- Quaternion propagation of attitude dynamics 
+- Plots o' plenty:
   - Mean, Eccentric, and True Anomalies over time
   - Velocity and Position error evolution
-  - Specific orbital energy
-  - 3D ECI orbital trajectory with Earth
-- ✅ Toggle plots interactively
+  - Angular velocities, angular momentum, kinetic rotational energy
+  - Polhode plot
+  - 3D ECI / ECEF orbital trajectory
+  - Ground track (In-progress)
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### 1. Install Poetry
 
@@ -35,7 +40,7 @@ Then ensure Poetry's scripts are in your system PATH:
 $env:Path += ";$env:USERPROFILE\AppData\Roaming\Python\Scripts"
 ```
 
-Or restart your terminal/editor (e.g., VS Code).
+Or restart your terminal / IDE.
 
 ---
 
@@ -69,60 +74,36 @@ sim
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
-spacecraft_gnc/
-├── pyproject.toml            # Poetry config and scripts
+SPACECRAFT_GNC
+├── .pytest_cache/
+├── .vscode/
+├── data/
 ├── src/
+│   ├── ascii_globe/
 │   └── gnc/
-│       ├── dynamics/         # Orbital mechanics
-│       ├── integrators/      # Custom ode113-like solver
-│       ├── attitude/         # Rigid body kinematics (quaternions)
-│       ├── simulation/       # Main runtime logic (main.py)
-│       └── visualisation/    # Modular plotting scripts
-└── tests/                    # Unit tests for core functions
+│       ├── __init__.py
+│       ├── attitude/
+│       ├── dynamics/
+│       ├── integrators/
+│       ├── simulation/
+│       ├── visualisation/
+│       └── __pycache__/
+├── tests/
+├── poetry.lock
+├── pyproject.toml
+├── pytest.ini
+└── README.md
+
 ```
 
 ---
 
-## 🧪 Running Tests
+## Dependencies
 
-Run all tests with:
-
-```bash
-poetry run pytest
-```
-
-Tests cover:
-- Quaternion conversion
-- Angular velocity propagation
-- Energy and angular momentum conservation
-- Orbital state errors and convergence
-
----
-
-## 📈 Plots Generated
-
-- 📉 **Specific Energy vs Time**
-- 📊 **Anomaly Evolution (Mean, Eccentric, True)**
-- 🔁 **Velocity and Position Error over Time**
-- 🌍 **3D ECI Trajectory around Earth**
-
-> Plots are optional — you'll be prompted interactively to show or skip them.
-
----
-
-## 📦 Dependencies
-
-Managed via Poetry. Key packages:
-
-- `numpy` – numerical operations
-- `scipy` – integrators, constants
-- `matplotlib` – plotting
-- `numba` – high-performance Kepler solver
-- `colorama` – coloured terminal feedback
-- `pytest` – testing
+Managed via Poetry, check pyproject.toml
 
 Install all with:
 ```bash
@@ -131,25 +112,21 @@ poetry install
 
 ---
 
-## 🧭 Future Features (Planned)
+## TODO
 
 - [ ] B-dot & PD Attitude Control
 - [ ] External disturbances (magnetic torque, drag)
 - [ ] Sensor simulation (gyros, sun sensors)
-- [ ] Quaternion-based animation of spacecraft body
-- [ ] Exportable PDF/HTML reports with embedded plots
 
 ---
 
-## 📚 Resources
+## Resources
 
 - 📄 Research paper (TBD / to be linked)
-- 📁 MATLAB reference implementation
-- 📸 Screenshots and sample outputs
 
 ---
 
-## 🤝 Acknowledgements
+## Acknowledgements
 
 This project is maintained by Leif Tinwell.
 
@@ -159,5 +136,5 @@ This project is maintained by Leif Tinwell.
 
 **MIT License** — you're free to use, adapt, and share.
 
-> Pull requests welcome. Star the repo if you find this useful 🚀
+> Pull requests welcome. Star the repo if you find this useful 
 
