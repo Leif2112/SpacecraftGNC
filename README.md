@@ -5,7 +5,7 @@
 \___ \ ) __//    \( (__  ) _)( (__  )   //    \ ) _)   )(    ( (_ \/    /( (__       
 (____/(__)  \_/\_/ \___)(____)\___)(__\_)\_/\_/(__)   (__)    \___/\_)__) \___)    
 ```
-**Spacecraft GNC** is a modular simulation toolkit for spacecraft orbital dynamics and attitude control. Ported from a validated MATLAB implementation and grounded in theory from a dedicated research [paper](Leif2112/SpacecraftGNC/blob/master/SDM_Report.pdf), this project provides a Python platform for GNC simulation.
+**Spacecraft GNC** is a modular simulation toolkit for spacecraft orbital dynamics and attitude control. Ported from a validated MATLAB implementation and grounded in theory from a dedicated research [paper](Leif2112/SpacecraftGNC/master/SDM_Report.pdf), this project provides a Python platform for GNC simulation.
 
 ---
 
